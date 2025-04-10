@@ -1,4 +1,4 @@
-#pragma once
+#ifndef _PHF_H
 #include <stddef.h>
 #include <stdint.h>
 
@@ -11,3 +11,6 @@ libphf_t* libphf_open(const char* filepath);
 void libphf_close(libphf_t*);
 
 libphf_index_t libphf_get(const libphf_t*, const uint8_t* key, size_t size);
+
+#define _PHF_H
+#endif
