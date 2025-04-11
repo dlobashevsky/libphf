@@ -16,7 +16,7 @@
 extern void libphf_compute_checksum(const void* data, size_t len, uint8_t out[16]);
 
 int libphf_check(const char* metafile, uint32_t flags) {
-    libphf_meta_t* meta=libphf_meta_load(metafile);
+    const libphf_meta_t* meta=libphf_meta_load(metafile);
     if (!meta) return -1;
 
     const char* bbh = libphf_meta_get(meta, "bitvector_file");

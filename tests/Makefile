@@ -18,5 +18,4 @@ $(TEST): $(LIB)
 
 dist clean:
 	rm -fR *.o $(TEST)
-	make -C tests clean
 
