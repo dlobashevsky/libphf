@@ -1,7 +1,7 @@
 #include "libphf_build_config.h"
-#include "libphf_header.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -9,9 +9,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-//#define IDX_ENTRY_SIZE sizeof(uint64_t)
-#define IDX_ENTRY_SIZE sizeof(libphf_idx_t)
-
+#define IDX_ENTRY_SIZE sizeof(uint64_t)
 
 static off_t estimate_file_size(const char* path, size_t* n_lines, size_t* total_bytes) {
     FILE* f = fopen(path, "r");
