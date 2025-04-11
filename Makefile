@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -O3 -std=c17
+CFLAGS = -Wall -O3 -std=c17 -D_GNU_SOURCE
 
 all: test
 

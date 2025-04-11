@@ -6,22 +6,43 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "config.h"
 #include "phf.h"
 
 #ifndef LIBPHF_HASH_FUNC
 #define LIBPHF_HASH_FUNC libphf_dummy_hash
 #endif
 
+
+static const uint8_t libphf_magic[3]="\x0d\xec\xca";
+static const uint8_t libphf_format_version=1;
+
+
+//! common packed header for bitvector and string files
+typedef struct libphf_header_t {
+    uint8_t magic[3];
+    uint8_t format_version;
+    uint8_t checksum[16];		//!< xxHash128 checksum of the bitstring
+    uint8_t checksum2[16];		//!< xxHash128 checksum of the string data
+    uint8_t uuid[16];			//!< uuid must be identical in both files
+    uint64_t bitvector_bits;
+    uint64_t n_keys;
+    uint64_t seed;
+    uint64_t size;
+} __attribute__((packed)) libphf_header_t;
+
+
+
 static uint64_t libphf_dummy_hash(const uint8_t* data, size_t len, uint64_t seed) {
-    // Временная заглушка: простой хеш (сумма + seed)
     uint64_t h = seed;
     for (size_t i = 0; i < len; ++i)
         h = h * 31 + data[i];
     return h;
 }
 
-struct libphf_s {
+struct libphf_t {
     const uint64_t* bitvector;
+    const uint8_t* strings;
     uint64_t bitvector_bits;
     uint64_t n_keys;
     uint64_t seed;
@@ -29,7 +50,8 @@ struct libphf_s {
     void* mmap_data;
 };
 
-libphf_t* libphf_open(const char* filepath) {
+
+libphf_t* libphf_open(const char* filepath,const char* stringfile) {
     int fd = open(filepath, O_RDONLY);
     if (fd < 0) return NULL;
 

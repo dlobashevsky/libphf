@@ -3,7 +3,7 @@
 #include <string.h>
 
 int main() {
-    libphf_t* phf = libphf_open("example.phf");
+    libphf_t* phf = libphf_open("example.phf",0);
     if (!phf) {
         fprintf(stderr, "fail to load phf\n");
         return 1;
