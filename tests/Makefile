@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS = -Wall -O3 -std=c17 -D_GNU_SOURCE -I.
+CFLAGS = -Wall -O3 -std=c17 -D_GNU_SOURCE -I..
 
 PROJ=phf
 LIB=../lib$(PROJ).a
@@ -11,10 +11,10 @@ OBJS= $(SRC:.c=.o)
 
 .PHONY: all test clean dist
 
-all: test
+all: $(TEST)
 
 $(TEST): $(LIB)
-	$(CC) $(CFLAGS) -L.. -l$(PROG) -o $@
+	$(CC) $(CFLAGS) *.c -L.. -l$(PROJ) -o $@
 
 dist clean:
 	rm -fR *.o $(TEST)
