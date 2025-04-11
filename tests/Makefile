@@ -14,7 +14,7 @@ OBJS= $(SRC:.c=.o)
 all: $(TEST)
 
 $(TEST): $(LIB)
-	$(CC) $(CFLAGS) *.c -L.. -l$(PROJ) -o $@
+	$(CC) $(CFLAGS) *.c -L.. -l$(PROJ) -lxxhash -o $@
 
 dist clean:
 	rm -fR *.o $(TEST)

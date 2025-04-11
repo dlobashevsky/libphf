@@ -36,3 +36,8 @@ typedef struct {
     size_t str_data_size;
 } libphf_internal_t;
 
+
+typedef struct __attribute__((packed)) {
+  uint64_t offset;
+  uint32_t len;   //<! alignment will be broken, but we're got 25% redusing file size
+} libphf_idx_t;

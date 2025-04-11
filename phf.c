@@ -1,3 +1,6 @@
+#include "phf.h"
+#include "libphf_header.h"
+#include "libphf_internal.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,38 +9,12 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include "config.h"
-#include "phf.h"
+#define LIBPHF_HASH_FUNC(key, len, seed) ((uint64_t)XXH3_64bits_withSeed((key), (len), (seed)))
 
-#ifndef LIBPHF_HASH_FUNC
-#define LIBPHF_HASH_FUNC libphf_dummy_hash
-#endif
-
-//! common packed header for bitvector and string files
-typedef struct libphf_header_t {
-    uint8_t magic[3];
-    uint8_t format_version;
-    uint8_t checksum[16];		//!< xxHash128 checksum of the bitstring
-    uint8_t checksum2[16];		//!< xxHash128 checksum of the string data
-    uint8_t uuid[16];			//!< uuid must be identical in both files
-    uint64_t bitvector_bits;
-    uint64_t n_keys;
-    uint64_t seed;
-    uint64_t size;
-} __attribute__((packed)) libphf_header_t;
-
-
-
-static uint64_t libphf_dummy_hash(const uint8_t* data, size_t len, uint64_t seed) {
-    uint64_t h = seed;
-    for (size_t i = 0; i < len; ++i)
-        h = h * 31 + data[i];
-    return h;
-}
+#include "xxhash.h"
 
 struct libphf_t {
     const uint64_t* bitvector;
-    const uint8_t* strings;
     uint64_t bitvector_bits;
     uint64_t n_keys;
     uint64_t seed;
@@ -45,18 +22,16 @@ struct libphf_t {
     void* mmap_data;
 };
 
-
-libphf_t* libphf_open(const char* filepath,const char* stringfile) {
+libphf_t* libphf_open(const char* filepath) {
     int fd = open(filepath, O_RDONLY);
     if (fd < 0) return NULL;
 
     off_t len = lseek(fd, 0, SEEK_END);
     void* map = mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
-
     close(fd);
     if (map == MAP_FAILED) return NULL;
 
-    if ((size_t)len < sizeof(libphf_t)) {
+    if ((size_t)len < sizeof(libphf_header_t)) {
         munmap(map, len);
         return NULL;
     }
@@ -67,17 +42,14 @@ libphf_t* libphf_open(const char* filepath,const char* stringfile) {
         return NULL;
     }
 
-    madvise(map, len, MADV_RANDOM);
-
-    phf->mmap_data = map;
-    phf->size = len;
-
-    // Читаем заголовок (заглушка)
     const uint64_t* hdr = (const uint64_t*)map;
     phf->bitvector_bits = hdr[0];
     phf->n_keys = hdr[1];
     phf->seed = hdr[2];
     phf->bitvector = hdr + 3;
+
+    phf->mmap_data = map;
+    phf->size = len;
 
     return phf;
 }
@@ -89,14 +61,19 @@ void libphf_close(libphf_t* phf) {
     }
 }
 
-libphf_index_t libphf_get(const libphf_t* phf, const uint8_t* key, size_t size) {
-    uint64_t h = LIBPHF_HASH_FUNC(key, size, phf->seed);
-    uint64_t idx = h % phf->bitvector_bits;
+libphf_index_t libphf_get(const libphf_t* ctx, const uint8_t* key, size_t len) {
+    if (!ctx || !key || !ctx->bitvector || ctx->bitvector_bits == 0) return LIBPHF_INDEX_NOT_FOUND;
 
-    uint64_t word = phf->bitvector[idx / 64];
-    uint64_t bit = (word >> (idx % 64)) & 1;
+    uint64_t hash = LIBPHF_HASH_FUNC(key, len, ctx->seed);
+    uint64_t idx = hash % ctx->bitvector_bits;
 
-    if (bit == 0)
+    size_t word_idx = idx / 64;
+    size_t bit_idx = idx % 64;
+
+    if (word_idx >= (ctx->bitvector_bits + 63) / 64) return LIBPHF_INDEX_NOT_FOUND;
+
+    uint64_t word = ctx->bitvector[word_idx];
+    if ((word & ((uint64_t)1 << bit_idx)) == 0)
         return LIBPHF_INDEX_NOT_FOUND;
 
     return (libphf_index_t)idx;

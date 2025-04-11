@@ -26,7 +26,8 @@ int libphf_check(const char* metafile, uint32_t flags) {
     if (!bbh) return -2;
 
     const char* files_to_check[3] = {bbh, idx, str};
-    const char* labels[3] = {"bbh", "idx", "str"};
+//## warning, not used
+//    const char* labels[3] = {"bbh", "idx", "str"};
     int check_flags[3] = {1, !(flags & LIBPHF_FLAG_SKIP_STRINGS), !(flags & LIBPHF_FLAG_SKIP_STRINGS)};
 
     libphf_header_t ref_hdr;

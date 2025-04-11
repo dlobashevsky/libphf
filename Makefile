@@ -22,6 +22,8 @@ $(DFILES): $(HFILES)
 
 lib: $(LIB)
 
+test: $(TEST)
+
 $(LIB): $(OBJS)
 	ar rcsu $@ $^
 

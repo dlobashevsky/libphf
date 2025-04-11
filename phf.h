@@ -9,7 +9,7 @@ typedef struct libphf_t libphf_t;
 
 
 //! sringfile safe to zero, in this case string comparition is not performed
-libphf_t* libphf_open(const char* indexfile,const char* stringfile);
+libphf_t* libphf_open(const char* filename);
 
 void libphf_close(libphf_t*);
 
