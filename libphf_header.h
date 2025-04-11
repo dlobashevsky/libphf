@@ -36,4 +36,3 @@ typedef struct {
     size_t str_data_size;
 } libphf_internal_t;
 
-int libphf_check_headers(const libphf_header_t* base, const libphf_header_t* other);

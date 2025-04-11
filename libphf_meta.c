@@ -8,8 +8,8 @@
 #define MAX_VALUE_LEN 256
 
 typedef struct {
-    char key[MAX_KEY_LEN];
-    char value[MAX_VALUE_LEN];
+    char* key;
+    char* value;
 } libphf_meta_entry_t;
 
 typedef struct {
@@ -26,33 +26,49 @@ static char* trim(char* str) {
     return str;
 }
 
-int libphf_meta_load(const char* filename, libphf_meta_t* meta) {
+const libphf_meta_t* libphf_meta_init(const char* filename) {
     FILE* fp = fopen(filename, "r");
-    if (!fp) return -1;
+    if (!fp) return 0;
 
-    char line[512];
+    libphf_meta_t* meta=calloc(1,sizeof(libphf_meta_t));
+    size_t z=0;
+    char *line=0;
     size_t count = 0;
 
-    while (fgets(line, sizeof(line), fp)) {
-        char* trimmed = trim(line);
-        if (trimmed[0] == '#' || trimmed[0] == '\0') continue;
+    while(getline(&line,&z,fp)>=0)
+    {
+      if(!*line || *line=='#' || isspace(*line))
+        continue;
+      char* trimmed = trim(line);
+      char* eq = strchr(trimmed, '=');
+      if (!eq || eq == trimmed) continue;
 
-        char* eq = strchr(trimmed, '=');
-        if (!eq || eq == trimmed) continue;
+      *eq = '\0';
+      char* key = trim(trimmed);
+      char* value = trim(eq + 1);
+      if (count >= MAX_META_ENTRIES) break;
+      meta->entries[count].key=strdup(key);
+      meta->entries[count].value=strdup(value);
 
-        *eq = '\0';
-        char* key = trim(trimmed);
-        char* value = trim(eq + 1);
-
-        if (count >= MAX_META_ENTRIES) break;
-        strncpy(meta->entries[count].key, key, MAX_KEY_LEN - 1);
-        strncpy(meta->entries[count].value, value, MAX_VALUE_LEN - 1);
-        count++;
+      count++;
     }
 
     fclose(fp);
     meta->count = count;
-    return 0;
+    free(line);
+    return meta;
+}
+
+void libphf_meta_free(const libphf_meta_t* meta)
+{
+  libphf_meta_t* m=(void*)meta;
+  if(!m)  return;
+  while(m->count--)
+  {
+    free(meta->entries[m->count].key);
+    free(meta->entries[m->count].value);
+  }
+  free(m);
 }
 
 const char* libphf_meta_get(const libphf_meta_t* meta, const char* key) {
