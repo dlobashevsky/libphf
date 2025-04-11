@@ -13,11 +13,6 @@
 #define LIBPHF_HASH_FUNC libphf_dummy_hash
 #endif
 
-
-static const uint8_t libphf_magic[3]="\x0d\xec\xca";
-static const uint8_t libphf_format_version=1;
-
-
 //! common packed header for bitvector and string files
 typedef struct libphf_header_t {
     uint8_t magic[3];
